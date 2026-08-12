@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>Codex 本地额度</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body>
+    <main id="widget" class="widget is-collapsed" data-skin="midnight" aria-live="polite">
+      <button id="orb" class="orb" type="button" aria-label="展开额度浮窗">
+        <span class="orb-ring" aria-hidden="true"></span>
+        <span class="orb-content">
+          <span id="orb-value" class="orb-value">--</span>
+          <span class="orb-unit">剩余</span>
+        </span>
+        <span id="orb-status" class="status-dot" aria-hidden="true"></span>
+      </button>
+
+      <section id="panel" class="panel" aria-label="Codex 本地额度详情">
+        <header id="drag-handle" class="panel-header">
+          <div class="brand">
+            <span class="brand-mark" aria-hidden="true">C</span>
+            <div>
+              <h1>Codex 本地额度</h1>
+              <p id="plan-line">正在读取本机会话日志…</p>
+            </div>
+          </div>
+          <div class="header-actions">
+            <button id="skin" class="icon-button" type="button" title="一键换肤" aria-label="一键换肤" aria-expanded="false" aria-controls="skin-menu">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 3a9 9 0 1 0 0 18h1.2a1.8 1.8 0 0 0 0-3.6H12a1.7 1.7 0 0 1 0-3.4h3.7A5.3 5.3 0 0 0 21 8.7C21 5.5 17 3 12 3Z" />
+                <circle cx="7.5" cy="10" r=".8" />
+                <circle cx="10" cy="6.8" r=".8" />
+                <circle cx="14" cy="6.8" r=".8" />
+              </svg>
+            </button>
+            <button id="refresh" class="icon-button" type="button" title="在线刷新额度" aria-label="在线刷新额度">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M20 7v5h-5M4 17v-5h5M6.1 9A7 7 0 0 1 18 6l2 2M17.9 15A7 7 0 0 1 6 18l-2-2" />
+              </svg>
+            </button>
+            <button id="collapse" class="icon-button" type="button" title="收起" aria-label="收起">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
+            </button>
+            <button id="quit" class="icon-button quit-button" type="button" title="隐藏到托盘" aria-label="隐藏到托盘">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+            </button>
+          </div>
+        </header>
+
+        <div id="skin-menu" class="skin-menu" hidden>
+          <span class="skin-menu-title">选择皮肤</span>
+          <div class="skin-options">
+            <button type="button" data-skin-choice="midnight"><i class="swatch swatch-midnight"></i>深海</button>
+            <button type="button" data-skin-choice="aurora"><i class="swatch swatch-aurora"></i>极光</button>
+            <button type="button" data-skin-choice="porcelain"><i class="swatch swatch-porcelain"></i>暖白</button>
+            <button type="button" data-skin-choice="sakura"><i class="swatch swatch-sakura"></i>樱粉</button>
+            <button id="custom-skin-choice" type="button" data-skin-choice="custom" hidden><i class="swatch swatch-custom"></i>我的照片</button>
+            <button id="photo-pick" class="photo-upload" type="button">＋ 选择照片</button>
+          </div>
+          <button id="remove-photo" class="remove-photo" type="button" hidden>删除已保存照片</button>
+        </div>
+
+        <div id="summary" class="summary">
+          <div>
+            <span class="eyebrow">可用额度</span>
+            <strong id="summary-value">--%</strong>
+          </div>
+          <span id="freshness" class="freshness">等待数据</span>
+        </div>
+
+        <div id="windows" class="windows"></div>
+
+        <div id="empty-state" class="empty-state" hidden>
+          <span class="empty-icon" aria-hidden="true">i</span>
+          <div>
+            <strong>还没有找到额度记录</strong>
+            <p id="empty-message">请先在 Codex 中运行一次任务，然后再刷新。</p>
+          </div>
+        </div>
+
+        <section class="reset-card" aria-label="重置卡信息">
+          <div class="reset-card-heading">
+            <div>
+              <span class="eyebrow">重置卡</span>
+              <strong id="reset-count">本地日志未提供</strong>
+            </div>
+            <button id="reset-query" class="query-button" type="button">在线查询</button>
+          </div>
+          <div class="reset-expiry">
+            <span>到期时间</span>
+            <span id="reset-expiry">点击查询后显示</span>
+          </div>
+        </section>
+
+        <footer class="privacy-note">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 3 5 6v5c0 4.6 2.8 8.5 7 10 4.2-1.5 7-5.4 7-10V6l-7-3Z" />
+            <path d="m9.5 12 1.7 1.7 3.7-4" />
+          </svg>
+          <span><strong>额度默认仅本地</strong> · 重置卡仅在手动确认后联网</span>
+        </footer>
+        <div id="skin-toast" class="skin-toast" role="status"></div>
+      </section>
+    </main>
+  </body>
+</html>

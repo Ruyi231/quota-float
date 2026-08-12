@@ -1,0 +1,19 @@
+# Local build and delivery artifacts
+/outputs/
+/local-quota-widget/src-tauri/target/
+/local-quota-widget/src-tauri/gen/
+
+# Local credentials and Codex data must never be committed
+/.codex/
+**/auth.json
+**/sessions/
+.env
+.env.*
+!.env.example
+
+# Editor and operating-system files
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
