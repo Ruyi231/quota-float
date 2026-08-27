@@ -3,6 +3,11 @@ import {
   shouldReplaceSnapshot,
   timestampMilliseconds,
 } from "./snapshot-order.mjs";
+import {
+  isFiveHourWindow,
+  orderedQuotaWindows,
+  selectPrimaryQuotaWindow,
+} from "./quota-display.mjs";
 
 const invoke = window.__TAURI__?.core?.invoke;
 
@@ -13,6 +18,7 @@ const elements = {
   orbStatus: document.querySelector("#orb-status"),
   panel: document.querySelector("#panel"),
   planLine: document.querySelector("#plan-line"),
+  summaryLabel: document.querySelector("#summary-label"),
   summaryValue: document.querySelector("#summary-value"),
   freshness: document.querySelector("#freshness"),
   windows: document.querySelector("#windows"),
@@ -314,10 +320,13 @@ function renderWindow(item) {
 
 function render(snapshot) {
   latestSnapshot = snapshot;
-  const windows = [snapshot?.primary, snapshot?.secondary].filter(Boolean);
+  const windows = orderedQuotaWindows(
+    [snapshot?.primary, snapshot?.secondary].filter(Boolean),
+  );
   const ok = snapshot?.status === "ok" && windows.length > 0;
-  const remaining = ok
-    ? Math.min(...windows.map((item) => clampPercent(item.remainingPercent)))
+  const primaryWindow = ok ? selectPrimaryQuotaWindow(windows) : null;
+  const remaining = primaryWindow
+    ? clampPercent(primaryWindow.remainingPercent)
     : 0;
 
   elements.orbValue.textContent = ok ? percentText(remaining) : "--";
@@ -328,6 +337,9 @@ function render(snapshot) {
   elements.planLine.textContent = ok
     ? `${planName(snapshot.planType)} · ${sourceLabel}`
     : "未找到可用的本地额度记录";
+  elements.summaryLabel.textContent = isFiveHourWindow(primaryWindow)
+    ? "5 小时可用额度"
+    : primaryWindow?.label || "可用额度";
   elements.summaryValue.textContent = ok ? percentText(remaining) : "--%";
   updateFreshness();
   elements.windows.replaceChildren(...windows.map(renderWindow));

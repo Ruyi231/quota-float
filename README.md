@@ -2,14 +2,14 @@
 
 一个面向 Windows 的轻量级 Codex 额度浮窗。它默认从本机 Codex 会话日志读取最近一次额度记录，并在用户手动确认后提供在线额度和重置卡查询。
 
-当前版本：**v1.3.3**  
+当前版本：**v1.3.4**
 支持平台：**Windows x64**
 
 > 本项目是社区工具，不是 OpenAI 官方产品，也不隶属于 OpenAI。
 
 ## 下载与使用
 
-普通用户可前往 [GitHub Releases](https://github.com/Ruyi231/quota-float/releases/latest) 下载 `codex-local-quota-widget-v1.3.3-windows-x64.exe`。
+普通用户可前往 [GitHub Releases](https://github.com/Ruyi231/quota-float/releases/latest) 下载最新的 Windows x64 便携版 EXE。
 
 1. 确保已经在这台电脑上登录并使用过 Codex。
 2. 运行下载的 EXE；软件不需要安装。
@@ -21,7 +21,7 @@
 
 ## 功能
 
-- 显示 Codex 主要额度窗口、次要额度窗口和重置时间
+- 浮窗主显示 5 小时额度剩余；展开后可查看 5 小时和周额度及各自重置时间
 - 显示重置卡剩余次数与到期时间
 - 圆形收起、悬停展开、窗口置顶和位置记忆
 - 关闭窗口后隐藏到系统托盘，不占用任务栏

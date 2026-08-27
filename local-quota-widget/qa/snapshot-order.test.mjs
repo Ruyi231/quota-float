@@ -4,6 +4,11 @@ import {
   shouldReplaceSnapshot,
   timestampMilliseconds,
 } from "../web/snapshot-order.mjs";
+import {
+  isFiveHourWindow,
+  orderedQuotaWindows,
+  selectPrimaryQuotaWindow,
+} from "../web/quota-display.mjs";
 
 function snapshot(source, observedAt, remainingPercent = 80) {
   return {
@@ -48,5 +53,27 @@ assert.equal(
   }),
   false,
 );
+
+const weeklyWindow = {
+  label: "7 天额度",
+  remainingPercent: 12,
+  windowMinutes: 10_080,
+};
+const fiveHourWindow = {
+  label: "5 小时额度",
+  remainingPercent: 76,
+  windowMinutes: 300,
+};
+assert.equal(isFiveHourWindow(fiveHourWindow), true);
+assert.equal(isFiveHourWindow(weeklyWindow), false);
+assert.deepEqual(orderedQuotaWindows([weeklyWindow, fiveHourWindow]), [
+  fiveHourWindow,
+  weeklyWindow,
+]);
+assert.equal(
+  selectPrimaryQuotaWindow([weeklyWindow, fiveHourWindow]),
+  fiveHourWindow,
+);
+assert.equal(selectPrimaryQuotaWindow([weeklyWindow]), weeklyWindow);
 
 console.log("snapshot ordering tests passed");
