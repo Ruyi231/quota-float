@@ -9,6 +9,10 @@ import {
   orderedQuotaWindows,
   selectPrimaryQuotaWindow,
 } from "../web/quota-display.mjs";
+import {
+  autoRefreshIntervalLabel,
+  normalizeAutoRefreshInterval,
+} from "../web/refresh-settings.mjs";
 
 function snapshot(source, observedAt, remainingPercent = 80) {
   return {
@@ -75,5 +79,9 @@ assert.equal(
   fiveHourWindow,
 );
 assert.equal(selectPrimaryQuotaWindow([weeklyWindow]), weeklyWindow);
+assert.equal(normalizeAutoRefreshInterval(), 1);
+assert.equal(normalizeAutoRefreshInterval("5"), 5);
+assert.equal(normalizeAutoRefreshInterval("7"), 1);
+assert.equal(autoRefreshIntervalLabel(30), "每 30 分钟");
 
 console.log("snapshot ordering tests passed");

@@ -101,7 +101,17 @@
             <path d="M12 3 5 6v5c0 4.6 2.8 8.5 7 10 4.2-1.5 7-5.4 7-10V6l-7-3Z" />
             <path d="m9.5 12 1.7 1.7 3.7-4" />
           </svg>
-          <span><strong>额度默认仅本地</strong> · 重置卡仅在手动确认后联网</span>
+          <label class="refresh-interval-control">
+            <strong id="refresh-note">每 1 分钟自动在线刷新</strong>
+            <select id="refresh-interval" aria-label="在线刷新间隔">
+              <option value="1">1 分钟</option>
+              <option value="2">2 分钟</option>
+              <option value="5">5 分钟</option>
+              <option value="10">10 分钟</option>
+              <option value="30">30 分钟</option>
+            </select>
+          </label>
+          <span>· 重置卡仅手动查询</span>
         </footer>
         <div id="skin-toast" class="skin-toast" role="status"></div>
       </section>

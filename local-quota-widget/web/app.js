@@ -8,6 +8,10 @@ import {
   orderedQuotaWindows,
   selectPrimaryQuotaWindow,
 } from "./quota-display.mjs";
+import {
+  autoRefreshIntervalLabel,
+  normalizeAutoRefreshInterval,
+} from "./refresh-settings.mjs";
 
 const invoke = window.__TAURI__?.core?.invoke;
 
@@ -32,6 +36,8 @@ const elements = {
   photoPick: document.querySelector("#photo-pick"),
   removePhoto: document.querySelector("#remove-photo"),
   refresh: document.querySelector("#refresh"),
+  refreshInterval: document.querySelector("#refresh-interval"),
+  refreshNote: document.querySelector("#refresh-note"),
   collapse: document.querySelector("#collapse"),
   quit: document.querySelector("#quit"),
   dragHandle: document.querySelector("#drag-handle"),
@@ -59,12 +65,14 @@ let lastRefreshAt = 0;
 let latestResetCredits;
 let resetCreditBlockedUntil = 0;
 let quotaOnlineBlockedUntil = 0;
+let autoRefreshTimer;
 
-const ONLINE_REFRESH_CONSENT_KEY =
-  "local-quota-widget-online-refresh-consent-v1";
+const AUTO_REFRESH_INTERVAL_KEY =
+  "local-quota-widget-auto-refresh-interval-minutes-v1";
 const RESET_CREDIT_MIN_INTERVAL_MS = 60_000;
 const RESET_CREDIT_RATE_LIMIT_FALLBACK_MS = 5 * 60_000;
 const QUOTA_ONLINE_RATE_LIMIT_FALLBACK_MS = 5 * 60_000;
+const ACTIVITY_REFRESH_MIN_INTERVAL_MS = 10_000;
 
 function showSkinToast(message) {
   elements.skinToast.textContent = message;
@@ -433,13 +441,7 @@ async function executeRefresh({
 }
 
 async function refresh(options = {}) {
-  if (refreshInFlight) {
-    try {
-      await refreshInFlight;
-    } catch {
-      // The queued refresh below still gets a chance to recover.
-    }
-  }
+  if (refreshInFlight) return refreshInFlight;
   const task = executeRefresh(options);
   refreshInFlight = task;
   try {
@@ -449,49 +451,67 @@ async function refresh(options = {}) {
   }
 }
 
-function onlineRefreshWasApproved() {
+function readAutoRefreshInterval() {
   try {
-    return (
-      window.localStorage.getItem(ONLINE_REFRESH_CONSENT_KEY) === "approved"
+    return normalizeAutoRefreshInterval(
+      window.localStorage.getItem(AUTO_REFRESH_INTERVAL_KEY),
     );
   } catch {
-    return false;
+    return normalizeAutoRefreshInterval();
   }
 }
 
-function rememberOnlineRefreshApproval() {
+function saveAutoRefreshInterval(minutes) {
   try {
-    window.localStorage.setItem(ONLINE_REFRESH_CONSENT_KEY, "approved");
+    window.localStorage.setItem(AUTO_REFRESH_INTERVAL_KEY, String(minutes));
   } catch {
-    // Manual online refresh still works when localStorage is unavailable.
+    // The default interval remains available when localStorage is unavailable.
   }
 }
 
-async function manualRefresh() {
+async function scheduledOnlineRefresh({ announce = false } = {}) {
   const cooldownSeconds = Math.ceil(
     (quotaOnlineBlockedUntil - Date.now()) / 1000,
   );
   if (cooldownSeconds > 0) {
-    const snapshot = await refresh();
-    showSkinToast(
-      isRecentSnapshot(snapshot)
-        ? "已刷新：本地最新额度"
-        : `在线刷新冷却中，请 ${cooldownSeconds} 秒后重试`,
-    );
-    return;
+    const snapshot = await refresh({ announce: false });
+    if (announce) {
+      showSkinToast(
+        isRecentSnapshot(snapshot)
+          ? "已刷新：本地最新额度"
+          : `在线刷新冷却中，请 ${cooldownSeconds} 秒后重试`,
+      );
+    }
+    return snapshot;
   }
-  let online = onlineRefreshWasApproved();
-  if (!online) {
-    online = window.confirm(
-      "为了立即显示重置卡后的真实额度，本次手动刷新会读取 Codex 登录凭据，并访问 ChatGPT 的额度查询接口。如果该响应附带重置卡信息，也会同步显示。不会发送对话、不会兑换重置卡，也不会调用模型。是否允许？",
-    );
-    if (online) rememberOnlineRefreshApproval();
-  }
-  await refresh({
-    online,
-    announce: true,
-    fallbackLocal: online,
+  return refresh({
+    online: true,
+    announce,
+    fallbackLocal: true,
   });
+}
+
+function configureAutoRefresh(minutes = readAutoRefreshInterval()) {
+  const normalized = normalizeAutoRefreshInterval(minutes);
+  window.clearInterval(autoRefreshTimer);
+  elements.refreshInterval.value = String(normalized);
+  const label = autoRefreshIntervalLabel(normalized);
+  elements.refreshNote.textContent = `${label}自动在线刷新`;
+  autoRefreshTimer = window.setInterval(
+    () => scheduledOnlineRefresh(),
+    normalized * 60_000,
+  );
+  return normalized;
+}
+
+async function refreshOnlineWhenDue() {
+  if (refreshInFlight) return refreshInFlight;
+  if (Date.now() - lastRefreshAt < ACTIVITY_REFRESH_MIN_INTERVAL_MS) return;
+  await scheduledOnlineRefresh();
+}
+
+async function manualRefresh() {
+  await scheduledOnlineRefresh({ announce: true });
 }
 
 async function setExpanded(next) {
@@ -511,7 +531,7 @@ async function setExpanded(next) {
   }
   if (next) {
     updateFreshness();
-    if (!latestSnapshot || Date.now() - lastRefreshAt > 10_000) refresh();
+    refreshOnlineWhenDue();
   }
 }
 
@@ -555,6 +575,12 @@ document.addEventListener("pointerdown", (event) => {
   }
 });
 elements.refresh.addEventListener("click", manualRefresh);
+elements.refreshInterval.addEventListener("change", () => {
+  const interval = configureAutoRefresh(elements.refreshInterval.value);
+  saveAutoRefreshInterval(interval);
+  scheduledOnlineRefresh();
+  showSkinToast(`已设为${autoRefreshIntervalLabel(interval)}自动在线刷新`);
+});
 elements.resetQuery.addEventListener("click", queryResetCredits);
 elements.quit.addEventListener("click", async () => {
   if (invoke) await invoke("hide_widget");
@@ -614,15 +640,15 @@ elements.dragHandle.addEventListener("pointerdown", async (event) => {
   }
 });
 
-window.addEventListener("focus", () => refresh());
+window.addEventListener("focus", refreshOnlineWhenDue);
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) {
     updateFreshness();
-    refresh();
+    refreshOnlineWhenDue();
   }
 });
 window.setInterval(updateFreshness, 30_000);
-window.setInterval(() => refresh(), 60_000);
-Promise.all([initializeSkin(), refresh()]).finally(async () => {
+configureAutoRefresh();
+Promise.all([initializeSkin(), scheduledOnlineRefresh()]).finally(async () => {
   if (invoke) await invoke("show_widget");
 });

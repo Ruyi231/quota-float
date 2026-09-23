@@ -432,6 +432,30 @@ button {
   font-weight: 650;
 }
 
+.refresh-interval-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.refresh-interval-control select {
+  min-width: 49px;
+  padding: 2px 3px;
+  border: 1px solid rgba(95, 206, 179, 0.2);
+  border-radius: 6px;
+  outline: none;
+  color: #89dfc3;
+  cursor: pointer;
+  background: rgba(62, 189, 154, 0.08);
+  font: inherit;
+  font-size: 8px;
+}
+
+.refresh-interval-control select:focus-visible {
+  border-color: rgba(122, 235, 204, 0.65);
+}
+
 .privacy-note svg {
   width: 12px;
   height: 12px;
@@ -791,7 +815,8 @@ button {
 }
 
 .widget[data-skin="porcelain"] .freshness,
-.widget[data-skin="porcelain"] .query-button {
+.widget[data-skin="porcelain"] .query-button,
+.widget[data-skin="porcelain"] .refresh-interval-control select {
   color: #327d69;
   border-color: rgba(50, 125, 105, 0.16);
   background: rgba(50, 125, 105, 0.07);
